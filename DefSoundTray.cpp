@@ -168,7 +168,37 @@ LRESULT TDefSoundTray::InvWndProc(
 
     // обработка событий от иконки в системном трее
     case TrayIconMessage:
-        if (lParam == WM_RBUTTONUP && pDefSoundTray)
+		if (lParam == WM_LBUTTONDBLCLK && pDefSoundTray)
+		{
+			// двойной клик мыши по значку в трее
+			HRESULT hResult = pDefSoundTray->m_arrEndpoints.RefreshList();
+			ATLASSERT(SUCCEEDED(hResult));
+			if (!SUCCEEDED(hResult))
+			{
+				ShowFormatError(L"Enumerate audio devices", hResult);
+				break;
+			}
+			SIZE_T nCount = 0;
+			nCount = pDefSoundTray->m_arrEndpoints.GetCount();
+			if (nCount >= 2)
+			{
+				const TAudioEndpoint &AudioEndpoint0 = pDefSoundTray->m_arrEndpoints[0];
+				const TAudioEndpoint &AudioEndpoint1 = pDefSoundTray->m_arrEndpoints[1];
+				bool isMmediaDefault0 = AudioEndpoint0.m_arrIsDefault[eMultimedia];
+				
+				if (!isMmediaDefault0)
+				{
+					hResult = pDefSoundTray->m_PolicyConfigVista.SetDefaultEndpoint(AudioEndpoint0.m_strDeviceId, eMultimedia);
+					ATLASSERT(SUCCEEDED(hResult));
+				}
+				else
+				{
+					hResult = pDefSoundTray->m_PolicyConfigVista.SetDefaultEndpoint(AudioEndpoint1.m_strDeviceId, eMultimedia);
+					ATLASSERT(SUCCEEDED(hResult));
+				}
+			}
+		}
+		else if (lParam == WM_RBUTTONUP && pDefSoundTray)
         {
             // клик правой кнопкой мыши по значку в трее
             HMENU hTrayMenu = CreatePopupMenu();
